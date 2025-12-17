@@ -2,39 +2,76 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Words</title>
+<title>words</title>
+<style>
+body { margin: 0; font-family: system-ui }
+input { width: 100%; box-sizing: border-box }
+details { padding: 6px }
+pre { margin: 0; padding: 6px; white-space: pre-wrap }
+</style>
 </head>
 <body>
+
 <input id="q" placeholder="ing">
+
+<details open>
+<summary>options</summary>
+
+<label><input type="radio" name="mode" value="start" checked> starts with input</label><br>
+<label><input type="radio" name="mode" value="end"> ends with input</label><br>
+<label><input type="radio" name="mode" value="any"> contains input</label><br><br>
+
+limit
+<input id="limit" value="200">
+</details>
+
 <pre id="out"></pre>
+
 <script>
-let set=new Set()
-let words=[]
+const q = document.getElementById("q")
+const out = document.getElementById("out")
+const limit = document.getElementById("limit")
+
+let words = []
+
 Promise.all([
-fetch("https://raw.githubusercontent.com/dwyl/english-words/refs/heads/master/words.txt").then(r=>r.text()),
-fetch("https://raw.githubusercontent.com/dwyl/english-words/refs/heads/master/words_alpha.txt").then(r=>r.text())
-]).then(a=>{
-a.forEach(t=>{
-t.split("\n").forEach(w=>{
-w=w.trim()
-if(w)set.add(w)
+fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").then(r => r.text()),
+fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt").then(r => r.text())
+]).then(list => {
+const set = new Set()
+list.forEach(text =>
+text.split("\n").forEach(w => {
+w = w.trim().toLowerCase()
+if (w) set.add(w)
 })
+)
+words = [...set]
 })
-words=[...set]
-})
-q.oninput=()=>{
-let v=q.value.toLowerCase()
-out.textContent=""
-if(!v)return
-let r=[]
-for(let w of words){
-if(w.startsWith(v)){
-r.push(w)
-if(r.length>=200)break
+
+document.body.oninput = search
+
+function search() {
+const v = q.value.toLowerCase()
+if (!v) { out.textContent = ""; return }
+
+const mode = document.querySelector("input[name=mode]:checked").value
+const max = parseInt(limit.value) || 200
+
+let result = []
+for (const w of words) {
+if (
+(mode == "start" && w.startsWith(v)) ||
+(mode == "end" && w.endsWith(v)) ||
+(mode == "any" && w.includes(v))
+) {
+result.push(w)
+if (result.length >= max) break
 }
 }
-out.textContent=r.join("\n")
+
+out.textContent = result.join("\n")
 }
 </script>
+
 </body>
 </html>
