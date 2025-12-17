@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>words</title>
 <style>
 body { margin:0; font-family:system-ui }
@@ -11,7 +11,6 @@ details { padding:6px }
 pre { margin:0; padding:6px; white-space:pre-wrap }
 </style>
 </head>
-
 <body>
 
 <input id="q" placeholder="ing">
@@ -19,9 +18,13 @@ pre { margin:0; padding:6px; white-space:pre-wrap }
 <details>
 <summary>options</summary>
 
-<label><input type="radio" name="m" value="s" checked> starts with input</label><br>
+<label><input type="radio" name="m" value="s"> starts with input</label><br>
 <label><input type="radio" name="m" value="e"> ends with input</label><br>
 <label><input type="radio" name="m" value="a"> contains input</label><br><br>
+
+<label><input type="checkbox" id="d"> hide words with diacratical marks</label><br>
+<label><input type="checkbox" id="r"> hide words with roman-numerals</label><br>
+<label><input type="checkbox" id="p"> hide words with apostrophe</label><br><br>
 
 limit
 <input id="l" value="200">
@@ -30,41 +33,68 @@ limit
 <pre id="o"></pre>
 
 <script>
+const S = localStorage
+
+m.value = S.m || "s"
+d.checked = S.d == 1
+r.checked = S.r == 1
+p.checked = S.p == 1
+l.value = S.l || 200
+
 let w = []
 
 Promise.all([
-fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").then(r=>r.text()),
-fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt").then(r=>r.text())
-]).then(a=>{
+"https://raw.githubusercontent.com/dwyl/english-words/master/words.txt",
+"https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt",
+"https://raw.githubusercontent.com/nlile/dictionary-word-list/refs/heads/master/largest_possible_aspell_wordlist.txt"
+].map(u => fetch(u).then(r => r.text())))
+.then(a => {
 let s = new Set()
-a.forEach(t=>t.split("\n").forEach(x=>{
+a.forEach(t =>
+t.split("\n").forEach(x => {
 x = x.trim().toLowerCase()
 if (x) s.add(x)
-}))
+})
+)
 w = [...s]
 })
 
 document.body.oninput = f
+document.body.onchange = save
+
+function save(){
+S.m = document.querySelector("[name=m]:checked").value
+S.d = d.checked ? 1 : 0
+S.r = r.checked ? 1 : 0
+S.p = p.checked ? 1 : 0
+S.l = l.value
+f()
+}
 
 function f(){
 let v = q.value.toLowerCase()
-if (!v) { o.textContent=""; return }
+if (!v) { o.textContent = ""; return }
 
-let m = document.querySelector("[name=m]:checked").value
+let mode = document.querySelector("[name=m]:checked").value
 let max = parseInt(l.value) || 200
-let r = []
+let res = []
 
 for (let x of w){
+if (d.checked && /[^\u0000-\u007f]/.test(x)) continue
+if (r.checked && /^[ivxlcdm]+$/i.test(x)) continue
+if (p.checked && x.includes("'")) continue
+
 if (
-m=="s" && x.startsWith(v) ||
-m=="e" && x.endsWith(v) ||
-m=="a" && x.includes(v)
+mode == "s" && x.startsWith(v) ||
+mode == "e" && x.endsWith(v) ||
+mode == "a" && x.includes(v)
 ){
-r.push(x)
-if (r.length==max) break
+res.push(x)
+if (res.length == max) break
 }
 }
-o.textContent = r.join("\n")
+
+o.textContent = res.join("\n")
 }
 </script>
 
