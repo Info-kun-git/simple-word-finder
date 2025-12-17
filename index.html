@@ -2,14 +2,16 @@
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>words</title>
 <style>
-body { margin: 0; font-family: system-ui }
-input { width: 100%; box-sizing: border-box }
-details { padding: 6px }
-pre { margin: 0; padding: 6px; white-space: pre-wrap }
+body { margin:0; font-family:system-ui }
+input { width:100%; box-sizing:border-box; padding:6px }
+details { padding:6px }
+pre { margin:0; padding:6px; white-space:pre-wrap }
 </style>
 </head>
+
 <body>
 
 <input id="q" placeholder="ing">
@@ -17,59 +19,52 @@ pre { margin: 0; padding: 6px; white-space: pre-wrap }
 <details open>
 <summary>options</summary>
 
-<label><input type="radio" name="mode" value="start" checked> starts with input</label><br>
-<label><input type="radio" name="mode" value="end"> ends with input</label><br>
-<label><input type="radio" name="mode" value="any"> contains input</label><br><br>
+<label><input type="radio" name="m" value="s" checked> starts with input</label><br>
+<label><input type="radio" name="m" value="e"> ends with input</label><br>
+<label><input type="radio" name="m" value="a"> contains input</label><br><br>
 
 limit
-<input id="limit" value="200">
+<input id="l" value="200">
 </details>
 
-<pre id="out"></pre>
+<pre id="o"></pre>
 
 <script>
-const q = document.getElementById("q")
-const out = document.getElementById("out")
-const limit = document.getElementById("limit")
-
-let words = []
+let w = []
 
 Promise.all([
-fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").then(r => r.text()),
-fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt").then(r => r.text())
-]).then(list => {
-const set = new Set()
-list.forEach(text =>
-text.split("\n").forEach(w => {
-w = w.trim().toLowerCase()
-if (w) set.add(w)
-})
-)
-words = [...set]
+fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words.txt").then(r=>r.text()),
+fetch("https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt").then(r=>r.text())
+]).then(a=>{
+let s = new Set()
+a.forEach(t=>t.split("\n").forEach(x=>{
+x = x.trim().toLowerCase()
+if (x) s.add(x)
+}))
+w = [...s]
 })
 
-document.body.oninput = search
+document.body.oninput = f
 
-function search() {
-const v = q.value.toLowerCase()
-if (!v) { out.textContent = ""; return }
+function f(){
+let v = q.value.toLowerCase()
+if (!v) { o.textContent=""; return }
 
-const mode = document.querySelector("input[name=mode]:checked").value
-const max = parseInt(limit.value) || 200
+let m = document.querySelector("[name=m]:checked").value
+let max = parseInt(l.value) || 200
+let r = []
 
-let result = []
-for (const w of words) {
+for (let x of w){
 if (
-(mode == "start" && w.startsWith(v)) ||
-(mode == "end" && w.endsWith(v)) ||
-(mode == "any" && w.includes(v))
-) {
-result.push(w)
-if (result.length >= max) break
+m=="s" && x.startsWith(v) ||
+m=="e" && x.endsWith(v) ||
+m=="a" && x.includes(v)
+){
+r.push(x)
+if (r.length==max) break
 }
 }
-
-out.textContent = result.join("\n")
+o.textContent = r.join("\n")
 }
 </script>
 
